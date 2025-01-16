@@ -39,6 +39,7 @@ jest.mock("./integrity-hash");
 jest.mock("./release-archive");
 jest.mock("node:fs");
 jest.mock("exponential-backoff");
+ject.mock("isomorphic-git");
 
 const realExponentialBackoff = jest.requireActual("exponential-backoff");
 
