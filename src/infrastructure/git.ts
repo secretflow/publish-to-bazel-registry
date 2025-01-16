@@ -1,22 +1,20 @@
 import { Injectable } from "@nestjs/common";
-import { simpleGit } from "simple-git";
+import http from 'isomorphic-git/http/web';
+import git from 'isomorphic-git';
+import fs from "fs";
 
 @Injectable()
 export class GitClient {
   public async shallowClone(url: string, diskPath: string, branchOrTag?: string): Promise<void> {
-    await simpleGit().clone(url, diskPath, [
-      ...(branchOrTag ? [
-        // Check out a single commit on the tip of the branch or at a tag
-        // From the docs: "--branch can also take tags and detaches the HEAD at that commit in the resulting repository"
-        // https://git-scm.com/docs/git-clone#Documentation/git-clone.txt-code--branchcodeemltnamegtem
-        "--branch",
-        branchOrTag,
-        "--single-branch"
-      ] : [
-        // Check out a single commit on the main branch
-        "--depth", "1"
-      ])
-    ]);
+    await git.clone({
+      fs,
+      http,
+      dir: diskPath,
+      url,
+      ref: branchOrTag || "main",
+      singleBranch: true,
+      depth: 1,
+    });
   }
 
   public async setUserNameAndEmail(
@@ -24,29 +22,51 @@ export class GitClient {
     name: string,
     email: string
   ): Promise<void> {
-    await simpleGit(repoPath)
-      .addConfig("user.name", name)
-      .addConfig("user.email", email);
+    await git.setConfig({
+      fs,
+      dir: repoPath,
+      path: "user.name",
+      value: name,
+    });
+    await git.setConfig({
+      fs,
+      dir: repoPath,
+      path: "user.email",
+      value: email,
+    });
   }
 
   public async checkoutNewBranchFromHead(
     repoPath: string,
     branch: string
   ): Promise<void> {
-    await simpleGit(repoPath).checkoutLocalBranch(branch);
+    await git.checkout({
+      fs,
+      dir: repoPath,
+      ref: branch,
+      create: true,
+    });
   }
 
   public async commitChanges(
     repoPath: string,
     commitMsg: string
   ): Promise<void> {
-    await simpleGit(repoPath).add("./*").commit(commitMsg);
+    await git.add({ fs, dir: repoPath, filepath: "." });
+    await git.commit({
+      fs,
+      dir: repoPath,
+      message: commitMsg,
+      author: {
+        name: await git.getConfig({ fs, dir: repoPath, path: "user.name" }),
+        email: await git.getConfig({ fs, dir: repoPath, path: "user.email" }),
+      },
+    });
   }
 
   public async hasRemote(repoPath: string, remote: string): Promise<boolean> {
-    return (await simpleGit(repoPath).getRemotes()).some(
-      (r) => r.name === remote
-    );
+    const remotes = await git.listRemotes({ fs, dir: repoPath });
+    return remotes.some((r) => r.remote === remote);
   }
 
   public async addRemote(
@@ -54,7 +74,7 @@ export class GitClient {
     remote: string,
     url: string
   ): Promise<void> {
-    await simpleGit(repoPath).addRemote(remote, url);
+    await git.addRemote({ fs, dir: repoPath, remote, url });
   }
 
   public async push(
@@ -62,6 +82,12 @@ export class GitClient {
     remote: string,
     branch: string
   ): Promise<void> {
-    await simpleGit(repoPath).push(remote, branch);
+    await git.push({
+      fs,
+      http,
+      dir: repoPath,
+      remote,
+      ref: branch,
+    });
   }
 }
