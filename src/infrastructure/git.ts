@@ -40,11 +40,11 @@ export class GitClient {
     repoPath: string,
     branch: string
   ): Promise<void> {
-    await git.checkout({
+    await git.branch({
       fs,
       dir: repoPath,
       ref: branch,
-      create: true,
+      checkout: true,
     });
   }
 
