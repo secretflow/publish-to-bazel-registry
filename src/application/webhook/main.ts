@@ -4,9 +4,6 @@ import { SecretsClient } from "../../infrastructure/secrets.js";
 import { ReleaseEventHandler } from "../release-event-handler.js";
 import { AppModule } from "./app.module.js";
 
-
-export const maxDuration = 60; // in seconds
-
 const handleGithubWebhookEvent = async (
   request: any,
   response: any
