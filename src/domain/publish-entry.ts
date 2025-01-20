@@ -26,7 +26,7 @@ export class PublishEntryService {
       `\
 Release: ${releaseUrl}
 
-_Automated by [Publish to BCR](https://github.com/apps/publish-to-bcr)_`
+_Automated by [Publish to bazel-registry](https://github.com/apps/publish-to-bazel-registry-bot)_`
     );
 
     try {
