@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import http from 'isomorphic-git/http/node/index.cjs';
 import * as git from 'isomorphic-git';
+import http from 'isomorphic-git/http/node/index.js';
 import fs from "fs";
 
 @Injectable()
