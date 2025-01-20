@@ -11,5 +11,10 @@
       "src": "/api/webhook/published",
       "dest": "src/application/webhook/main.ts"
     }
-  ]
+  ],
+  "functions": {
+    "src/application/webhook/main.ts": {
+      "maxDuration": 60
+    }
+  }
 }
