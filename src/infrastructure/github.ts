@@ -177,7 +177,10 @@ export class GitHubClient {
       return GitHubClient.GITHUB_ACTIONS_BOT;
     }
     const { data } = await this.octokit.rest.users.getByUsername({ username });
-    return { name: data.name, username, email: data.email };
+    if (data.email === null) {
+      return { id: data.id, name: data.name, username, email: `${data.id}+${username}@users.noreply.github.com` };
+    }
+    return { id: data.id, name: data.name, username, email: data.email };
   }
 
   public async hasAppInstallation(repository: Repository): Promise<boolean> {

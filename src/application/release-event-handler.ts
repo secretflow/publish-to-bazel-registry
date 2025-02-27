@@ -44,6 +44,7 @@ export class ReleaseEventHandler {
         event.payload.sender.login,
         repository
       );
+      console.log('releaser is ', JSON.stringify(releaser, null, 2));
       const releaseUrl = event.payload.release.html_url;
 
       const tag = event.payload.release.tag_name;
