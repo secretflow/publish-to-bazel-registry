@@ -27,7 +27,7 @@ export function getAppAuthorizedOctokit(
   appId: number,
   privateKey: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Octokit {
   return new Octokit({
     authStrategy: createAppAuth,
@@ -47,7 +47,7 @@ export function getAppAuthorizedOctokit(
 export async function getInstallationAuthorizedOctokit(
   appOctokit: Octokit,
   installationId: number,
-  repository: string
+  repository: string,
 ): Promise<Octokit> {
   const octokit = await appOctokit.auth({
     type: "installation",
@@ -84,20 +84,19 @@ export class GitHubClient {
   public static async forRepoInstallation(
     appOctokit: Octokit,
     repository: Repository,
-    installationId?: number
+    installationId?: number,
   ): Promise<GitHubClient> {
     if (installationId === undefined) {
       const appClient = new GitHubClient(appOctokit);
-      const installation = await appClient.getRepositoryInstallation(
-        repository
-      );
+      const installation =
+        await appClient.getRepositoryInstallation(repository);
       installationId = installation.id;
     }
 
     const installationOctokit = await getInstallationAuthorizedOctokit(
       appOctokit,
       installationId,
-      repository.name
+      repository.name,
     );
     const client = new GitHubClient(installationOctokit);
 
@@ -107,7 +106,7 @@ export class GitHubClient {
   public constructor(private readonly octokit: Octokit) {}
 
   public async getForkedRepositoriesByOwner(
-    owner: string
+    owner: string,
   ): Promise<Repository[]> {
     // This endpoint works for org owners as well as user owners
     const response = await this.octokit.rest.repos.listForUser({
@@ -122,7 +121,7 @@ export class GitHubClient {
   }
 
   public async getSourceRepository(
-    repository: Repository
+    repository: Repository,
   ): Promise<Repository | null> {
     const response = await this.octokit.rest.repos.get({
       owner: repository.owner,
@@ -157,10 +156,7 @@ export class GitHubClient {
     return pull.number;
   }
 
-  public async enableAutoMerge(
-    repo: Repository,
-    pullNumber: number,
-  ) {
+  public async enableAutoMerge(repo: Repository, pullNumber: number) {
     await this.octokit.rest.pulls.update({
       owner: repo.owner,
       repo: repo.name,
@@ -171,16 +167,26 @@ export class GitHubClient {
 
   public async getRepoUser(
     username: string,
-    repository: Repository
+    repository: Repository,
   ): Promise<User> {
     if (username === GitHubClient.GITHUB_ACTIONS_BOT.username) {
       return GitHubClient.GITHUB_ACTIONS_BOT;
     }
     const { data } = await this.octokit.rest.users.getByUsername({ username });
     if (data.email === null) {
-      return { id: data.id, name: data.name, username, email: `${data.id}+${username}@users.noreply.github.com` };
+      return {
+        id: data.id,
+        name: data.name !== null ? data.name : username,
+        username,
+        email: `${data.id}+${username}@users.noreply.github.com`,
+      };
     }
-    return { id: data.id, name: data.name, username, email: data.email };
+    return {
+      id: data.id,
+      name: data.name !== null ? data.name : username,
+      username,
+      email: data.email,
+    };
   }
 
   public async hasAppInstallation(repository: Repository): Promise<boolean> {
@@ -196,7 +202,7 @@ export class GitHubClient {
   }
 
   public async getRepositoryInstallation(
-    repository: Repository
+    repository: Repository,
   ): Promise<Installation> {
     try {
       const { data: installation } =
@@ -210,7 +216,7 @@ export class GitHubClient {
         throw new MissingRepositoryInstallationError(repository);
       }
       throw new Error(
-        `Could not access app installation for repo ${repository.canonicalName}; returned status ${status}`
+        `Could not access app installation for repo ${repository.canonicalName}; returned status ${status}`,
       );
     }
   }
@@ -229,7 +235,7 @@ export class GitHubClient {
   }
 
   public async getAuthenticatedRemoteUrl(
-    repository: Repository
+    repository: Repository,
   ): Promise<string> {
     const token = await this.getInstallationToken(repository);
     return `https://x-access-token:${token}@github.com/${repository.canonicalName}.git`;
